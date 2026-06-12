@@ -21,6 +21,10 @@ export default class CrucibleBaseItemSheet extends api.HandlebarsApplicationMixi
       actionEdit: CrucibleBaseItemSheet.#onActionEdit,
       affixDelete: CrucibleBaseItemSheet.#onAffixDelete,
       affixEdit: CrucibleBaseItemSheet.#onAffixEdit,
+      effectCreate: CrucibleBaseItemSheet.#onEffectCreate,
+      effectEdit: CrucibleBaseItemSheet.#onEffectEdit,
+      effectDelete: CrucibleBaseItemSheet.#onEffectDelete,
+      effectToggle: CrucibleBaseItemSheet.#onEffectToggle,
       hookToggleSource: CrucibleBaseItemSheet.#onHookToggleSource,
       expandSection: CrucibleBaseItemSheet.#onExpandSection
     },
@@ -31,6 +35,7 @@ export default class CrucibleBaseItemSheet extends api.HandlebarsApplicationMixi
       type: undefined, // Defined by subclass
       includesActions: false,
       includesAffixes: false,
+      includesEffects: false,
       includesEquipment: false,
       includesHooks: false,
       hasAdvancedDescription: false
@@ -153,6 +158,16 @@ export default class CrucibleBaseItemSheet extends api.HandlebarsApplicationMixi
       this.TABS.sheet.push({id: "equipment", group: "sheet", icon: "fa-solid fa-suitcase",
         label: "ITEM.TABS.Equipment"});
     }
+
+    // Includes Effects
+    if ( item.includesEffects ) {
+      this.PARTS.effects = {
+        id: "effects",
+        template: "systems/crucible/templates/sheets/item/item-effects.hbs",
+        scrollable: [""]
+      };
+      this.TABS.sheet.push({id: "effects", group: "sheet", icon: "fa-solid fa-person-rays", label: "ITEM.TABS.Effects"});
+    }
   }
 
   /* -------------------------------------------- */
@@ -243,6 +258,20 @@ export default class CrucibleBaseItemSheet extends api.HandlebarsApplicationMixi
             publicSrc: src,
             publicHTML: await editorCls.enrichHTML(src, editorOptions)
           };
+        }
+        break;
+      case "effects":
+        context.effects = [];
+        for ( const effect of this.document.effects ) {
+          context.effects.push({
+            id: effect.id,
+            icon: effect.img,
+            name: effect.name,
+            tags: effect.system.getTags?.() ?? {},
+            uuid: effect.uuid,
+            disabled: effect.disabled ? {icon: "fa-solid fa-toggle-off", tooltip: "ACTIVE_EFFECT.ACTIONS.Enable"}
+              : {icon: "fa-solid fa-toggle-on", tooltip: "ACTIVE_EFFECT.ACTIONS.Disable"}
+          });
         }
         break;
       case "hooks":
@@ -591,5 +620,70 @@ export default class CrucibleBaseItemSheet extends api.HandlebarsApplicationMixi
     const effect = this.document.effects.get(effectId);
     if ( !effect ) return;
     await effect.deleteDialog();
+  }
+
+  /* -------------------------------------------- */
+
+  /**
+   * Create a new ActiveEffect on the item.
+   * @this {CrucibleBaseItemSheet}
+   * @type {ApplicationClickAction}
+   */
+  static async #onEffectCreate() {
+    const cls = getDocumentClass("ActiveEffect");
+    await cls.create({
+      name: this.document.name,
+      img: this.document.img,
+      type: "base"
+    }, {parent: this.document, renderSheet: true});
+  }
+
+  /* -------------------------------------------- */
+
+  /**
+   * Open a confirmation dialog to delete an ActiveEffect from the item.
+   * @this {CrucibleBaseItemSheet}
+   * @type {ApplicationClickAction}
+   */
+  static async #onEffectDelete(event, target) {
+    const effect = this.#getEventEffect(event, target);
+    await effect?.deleteDialog();
+  }
+
+  /* -------------------------------------------- */
+
+  /**
+   * Open the sheet for an ActiveEffect on the item.
+   * @this {CrucibleBaseItemSheet}
+   * @type {ApplicationClickAction}
+   */
+  static async #onEffectEdit(event, target) {
+    const effect = this.#getEventEffect(event, target);
+    await effect?.sheet.render({force: true});
+  }
+
+  /* -------------------------------------------- */
+
+  /**
+   * Toggle the disabled state of an ActiveEffect on the item.
+   * @this {CrucibleBaseItemSheet}
+   * @type {ApplicationClickAction}
+   */
+  static async #onEffectToggle(event, target) {
+    const effect = this.#getEventEffect(event, target);
+    await effect?.update({disabled: !effect.disabled});
+  }
+
+  /* -------------------------------------------- */
+
+  /**
+   * Get the ActiveEffect document associated with an action event.
+   * @param {PointerEvent} _event
+   * @param {HTMLElement} target
+   * @returns {ActiveEffect|null}
+   */
+  #getEventEffect(_event, target) {
+    const effectUuid = target.closest(".effect")?.dataset.uuid;
+    return fromUuidSync(effectUuid);
   }
 }

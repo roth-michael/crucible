@@ -10,6 +10,7 @@ export default class CrucibleToolItemSheet extends CrucibleBaseItemSheet {
     item: {
       type: "tool",
       includesActions: true,
+      includesEffects: true,
       includesHooks: true,
       hasAdvancedDescription: true
     }

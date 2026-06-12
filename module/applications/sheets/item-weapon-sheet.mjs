@@ -11,6 +11,7 @@ export default class CrucibleWeaponItemSheet extends CrucibleBaseItemSheet {
       type: "weapon",
       includesActions: true,
       includesAffixes: true,
+      includesEffects: true,
       includesHooks: true,
       hasAdvancedDescription: true
     }

@@ -10,6 +10,7 @@ export default class CrucibleConsumableItemSheet extends CrucibleBaseItemSheet {
     item: {
       type: "consumable",
       includesActions: true,
+      includesEffects: true,
       includesHooks: true,
       hasAdvancedDescription: true
     }

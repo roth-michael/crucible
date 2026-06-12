@@ -11,6 +11,7 @@ export default class CrucibleAccessoryItemSheet extends CrucibleBaseItemSheet {
       type: "accessory",
       includesActions: true,
       includesAffixes: true,
+      includesEffects: true,
       includesHooks: true,
       hasAdvancedDescription: true
     }
